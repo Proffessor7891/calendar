@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Task } from '../types';
-import * as api from '../api/tasks';
+import { storage } from '../api/storage';
 
 export const useTasks = (month: string) => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -11,7 +11,7 @@ export const useTasks = (month: string) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.fetchTasks(month);
+      const data = await storage.fetchTasks(month);
       setTasks(data);
     } catch {
       setError('Failed to load tasks');
@@ -30,7 +30,7 @@ export const useTasks = (month: string) => {
       const order = tasksOnDay.length;
       const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
       const assignedColor = color || colors[Math.floor(Math.random() * colors.length)];
-      const task = await api.createTask({ title, date, order, color: assignedColor });
+      const task = await storage.createTask({ title, date, order, color: assignedColor });
       setTasks(prev => [...prev, task]);
       return task;
     },
@@ -38,13 +38,13 @@ export const useTasks = (month: string) => {
   );
 
   const editTask = useCallback(async (id: string, data: Partial<Task>) => {
-    const updated = await api.updateTask(id, data);
+    const updated = await storage.updateTask(id, data);
     setTasks(prev => prev.map(t => (t._id === id ? updated : t)));
     return updated;
   }, []);
 
   const removeTask = useCallback(async (id: string) => {
-    await api.deleteTask(id);
+    await storage.deleteTask(id);
     setTasks(prev => prev.filter(t => t._id !== id));
   }, []);
 
@@ -76,7 +76,7 @@ export const useTasks = (month: string) => {
 
         const updated = [...others, ...sourceDay, ...reorderedTarget];
 
-        api
+        storage
           .reorderTasks(updated.map(t => ({ id: t._id, order: t.order, date: t.date })))
           .catch(console.error);
 
